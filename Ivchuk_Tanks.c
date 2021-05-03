@@ -5,56 +5,66 @@
 #include <conio.h>
 
 /*
-Управління танком гравця:
-w-вгору
-d-праворуч
-s-донизу
-a-ліворуч
-f-вистріл
-e-вихід з гри
+Control keys :
+w-move up
+d-move right 
+s-move down 
+a-move left 
+f-launch your bullet
+e-exit
 */
 
-//розмір ігрового поля
+//a size of a gamefield
 #define X 115
 #define Y 60
-#define T 300  //кількість мілісекунд в затримці
-#define TS 3  //швидкість танка
-#define BS 5 //швидкість кулі
+#define T 300  //the quantity of milliseconds (for a loop delay function) 
+#define TS 3  //a speed of tanks
+#define BS 5 //a speed of bullets 
 
-void gotoxy(float x, float y);  // функція переміщення курсора
-void imgTank( int x, int y, int trn); //малюємо танк на заданій координаті відповідно до його напрямку
-void hideTank( int x, int y, int trn); //замальовуємо танк на заданій координаті відповідно до його напрямку
-void hitedTank(int x, int y, int trn); //зображення підбитого танка
-void hidehitedTank(int x, int y, int trn); //замальовуємо підбитий танк
-void Start();                              //вивід на екран заставки
-void End(int hits, int mehits);        //вивід на екран результатів
-void moveBullet(int *fBullet, int *xBullet,int *yBullet, int *oldxBullet,int *oldyBullet, int *dirBullet,int *x,int *y, int *fTank);//забезпечує переміщення кулі та контролює влучання
-void backTurn(int *x,int *y, int *cpx,int *cpy, int *c); //розвертає танк при під'їзді до межігрового поля
-void avoidCollision(int *x,int *y,int *mx,int *my,int *cpx,int *cpy,int *c);//запобігає накладання зображення танка противника на наш танк чи інший обєкт в грі
-void enemyShoot(int *c, int *mx, int *my, int *y, int *x, int *fEnemBullet, int *xEnemBullet, int *yEnemBullet, int *dirEnemBullet);//вчасний вистріл ворожого танка
-void renderTank(int *fTank, int *x, int *y, int *cpx, int *cpy, int *c, int *oldc, int *fhit, int *hits);//замальовує попереднє положення танка, малює його на поточних координатах
+void gotoxy(float x, float y);  // provides a cursor with a transfer to a consoleвЂ™s position of coordinates x and y.
+void imgTank( int x, int y, int trn); //provides an image of a tank on an allocated position according to a seted direction.  
+void hideTank( int x, int y, int trn); //provides an invisible image of a tank on an indicated position.
+void hitedTank(int x, int y, int trn); //renders an image of a destroyed tank. 
+void hidehitedTank(int x, int y, int trn); //paints over an image of a destroyed tank. 
+void Start();                              //creates a start page of a game.                            
+void End(int hits, int mehits);        //shows results of a game.  
+void moveBullet(int *fBullet, int *xBullet,int *yBullet, int *oldxBullet,int *oldyBullet, int *dirBullet,int *x,int *y, int *fTank);//provides the calculations of a new position of a bullet and checks the moment of a successful shoot.    
+void backTurn(int *x,int *y, int *cpx,int *cpy, int *c); //provides the new coordinates for an enemy tanks when it reaches the border of a game field. 
+void avoidCollision(int *x,int *y,int *mx,int *my,int *cpx,int *cpy,int *c);//prevents a gemer's tank from overriding by an enemyвЂ™s tank.
+void enemyShoot(int *c, int *mx, int *my, int *y, int *x, int *fEnemBullet, int *xEnemBullet, int *yEnemBullet, int *dirEnemBullet);//defines a moment, when an enemy tank should launch a bullet. 
+void renderTank(int *fTank, int *x, int *y, int *cpx, int *cpy, int *c, int *oldc, int *fhit, int *hits);//renders and hides an image of a tank according to its new and old coordinates. 
 
 int main(){
-	int x,y,cpx,cpy, mx,my, mcpx,mcpy;//поточні та попередні координати ворожого танка та танка гравця
-	int c, oldc ; //  поточний та попередній напрямок танка компютера
-	int intKey, intCpkey,cpk; //напрямок танка гравця
-	char key,cpkey;//поточне та попереднє значення натиснутої клавіші
-	int fBullet=0,dirBullet,xBullet,yBullet, oldxBullet, oldyBullet ;// гравець - прапорець кулі(є/немає), напрям кулі, поточні координати кулі, попередні координати кулі.
+	int x,y,cpx,cpy, mx,my, mcpx,mcpy;//a set of current and previous coordinates of an enemy tank and an playerвЂ™s tank. 
+	int c, oldc ; //  current and previous directions of an enemy tank.
+	int intKey, intCpkey,cpk; //current and previous directions of a playerвЂ™s tank.
+	char key,cpkey;//a value of a currently pressed key, a value of a previously pressed key.
+	//*************************************************************************************************************
+	// a flag of an existence of a playerвЂ™s bullet; 
+	//a direction of a playerвЂ™s launched bullet; 
+	//current and previous coordinates of a playerвЂ™s bullet. 
+	int fBullet=0,dirBullet,xBullet,yBullet, oldxBullet, oldyBullet ;
+	//*************************************************************************************************************
+	//a flag of a state of an enemy bullet;
+	// a direction of an enemy bullet moving.
+	//current and old coordinates of a bullet launched by an enemy tank.
+	int fEnemBullet=1, xEnemBullet, yEnemBullet, oldxEnemBullet=0, oldyEnemBullet, dirEnemBullet, fisEnemBullet;
+	//*************************************************************************************************************													    
+	                                                                                                          
 	
-	int fEnemBullet=1, xEnemBullet, yEnemBullet, oldxEnemBullet=0, oldyEnemBullet, dirEnemBullet, fisEnemBullet;//компютер -прапорець кулі(є/немає), напрям кулі, поточні координати кулі, попередні координати кулі.
 	
-	int  fTank=1, fmyTank=1;//прапорці непідбитий/підбитий танк компютера/гравця
+	int  fTank=1, fmyTank=1;//flags of an existence of playerвЂ™s and enemy tanks. 
 	
-	int fShift=1;// прапорець чергування ходу в циклі компютер/гравець
-	int fhit=7, fmehit=7;// лічильник часу відображення решток підбитого танка
+	int fShift=1;// a flag that is responsible for equal allocating of computing resources between a playerвЂ™s tank and a computerвЂ™s tank. 
+	int fhit=7, fmehit=7;// flags that indicate the moment of a tank hitting. 
 	int i,f;
-	int hits=0, mehits=0;// лічильники кількості підбитих танків
+	int hits=0, mehits=0;// quantities of destroyed tanks by a gamer and a computer. 
 	
 
 	
 	//gotoxy(x,y);
 	//printf("%c",'#');
-	Start();//виводимо закладку на екран
+	Start();// the start page randering
 	for(i=0;i<=X;i++){
 		gotoxy(i,0);
 		printf("#");
@@ -89,46 +99,46 @@ int main(){
 		
 		
 		
-		oldc=c;//попередньому напрямку танка противника присвоюємо його поточний напрямок
-	    cpkey=key;//попередньому напрямку танка гравця присвоюємо його поточний напрямок
+		oldc=c;//the current direction of enemie's tank moving is assign as the previous one
+	    cpkey=key;//the current direction of gamer's tank moving is assign as the previous one
 	    
 	    //*****************
-	    if(oldxBullet!=0){        // замальовуємо зображення гулі гравця на попередніх координатах
+	    if(oldxBullet!=0){        // overpainting of gamer's bullet on the privious coordinates 
 	      gotoxy(oldxBullet,oldyBullet);
 		  printf(" ");	
 	    }
 		
 		
-		if(fBullet==1){            //даємо зображення кулі гравця на поточних координатах
+		if(fBullet==1){            //rendering an image of a gamerвЂ™s bullet on the current coordinates 
 	    	gotoxy(xBullet,yBullet);
 		    printf("#");
 		}
 		//*****************
 		
 		//******************
-		    if(oldxEnemBullet!=0){  //замальовуємо кулю компютера на попередньому ході
+		    if(oldxEnemBullet!=0){  // overpainting of an enemie's bullet on the privious coordinates 
 	      gotoxy(oldxEnemBullet,oldyEnemBullet);
 		  printf(" ");	
 	    }
 		
 		
-		if(fEnemBullet==1){ //якщо був вистріл, то малюємо кулю противника на поточних координатах
+		if(fEnemBullet==1){ //after the launching it provides rendering an image of a gamerвЂ™s bullet on the current coordinates. 
 	    	gotoxy(xEnemBullet,yEnemBullet);
 		    printf("#");
 		}
 		//******************
-		Sleep(T);	//затримуємо виток циклу на вказану кількість мілісекунд
-		mcpx=mx;     // запамятовуємо поточні координати центру танка
+		Sleep(T);	//stopping of a current circle's loop on T millisecond. 
+		mcpx=mx;     // remembering  the coordinates of a current tankвЂ™s position. 
 	 	mcpy=my;
-		if((!kbhit())||(fShift==0)){  //якщо клавіша не була нажата або якщо на попередньоу витку циклу  хід був за гравцем - віддаємо подальше виконання витка компютеру
+		if((!kbhit())||(fShift==0)){  //if a key was not pushed or a previous move was conducted by a gamer, a current loop is delegated to a computer.
 		   //*******Bullets*****************
-           if(fBullet==1){   //рахуємо нові стани кулі гравця та її можливу дію на противника
+           if(fBullet==1){   //calculating a new state of a gamerвЂ™s bullet and its possible influence on an enemyвЂ™s tank.
               moveBullet(&fBullet, &xBullet, &yBullet, &oldxBullet, &oldyBullet, &dirBullet, &x, &y, &fTank);
   	            
 			}
     //*******BulletsEnd**************
     //********EnemyBullets***********
-    if(fEnemBullet==1){ // робимо обрахунки нових данних для кулі противника
+    if(fEnemBullet==1){ // preparing a new data about an enemy's bullet
          moveBullet(&fEnemBullet,&xEnemBullet,&yEnemBullet,&oldxEnemBullet,&oldyEnemBullet,&dirEnemBullet,&mx,&my,&fmyTank);
     	
 	}
@@ -136,9 +146,9 @@ int main(){
     //*****EndEnemyBullets***********
        cpx=x;
 	   cpy=y;
-       if(fTank==1){ // поки танк противника не підбитий готуємо йому данні для наступного витка циклу
+       if(fTank==1){ // if an enemyвЂ™s tank is not hitted, prepare a data for the next loop of the cycle.  
 		
-	if(f<=10){  // танк компютера робить 10 ходів, а потім довільно змінює напрямок руху
+	if(f<=10){  // an enemyвЂ™s tank makes 10 steps and then its move direction will be changed.  
 		switch(c){
 			
 			case 0: y=y-TS; break;
@@ -150,7 +160,7 @@ int main(){
 		 f=0;
 		 c=rand()%4;
 	}
-	//якщо танк дійшов до краю ігрового поля - напрямок його руху змінюємо на протележний	
+	//if an enemyвЂ™s tank reaches a border of the gamefield, its move direction will be changed to opposite.    
 	if((x<=1)||(x>=X-1)||(y<=1)||(y>=Y-1)){ 
 		backTurn(&x,&y,&cpx,&cpy,&c);
 		
@@ -162,17 +172,17 @@ int main(){
     ++f;
 	}
 	//*********EnemyShoot**************
-	if(fEnemBullet==0){ //якщо на лінії руху танка противника зявився танк граця, готуємо вистріл
+	if(fEnemBullet==0){ //Л™if the gamerвЂ™s tank appears on the line of an enemyвЂ™s tank move, a shot will be triggered     
 		enemyShoot(&c,&mx,&my,&y,&x,&fEnemBullet,&xEnemBullet,&yEnemBullet,&dirEnemBullet);
 		
 	}
 	//**********EndEnemyShoot****************
-		   fShift=1; //наступний хід віддаємо гравцю,якщо він натисне клавішу
-		} else { //обробка ходу гравця
+		   fShift=1; //the next move will be given to the gamer if he pushes a key.      
+		} else { //a start of a gamer's move processing 
 	    	
 	    	key=getch();
 	    	
-		//mcpx=mx;     // запамятовуємо поточні координати центру танка
+		//mcpx=mx;     Е•
 	 	//mcpy=my;
 	    intCpkey=intKey;
 	
@@ -195,8 +205,8 @@ int main(){
 			mx=mx-TS;
 		} 
 		
-	 if((mx<=1)||(mx>=X-1)||(my<=1)||(my>=Y-1)) {//if(GamField[mx][my]=='#'){  //якщо танк дійшов до краю ігрового поля - його координати в цьому напрямку не змінюємо ()
-			mx=mcpx;                                                          // дана умова повністю спрацьовує при кроці координат танка ==1, але наразі у грі встановлено ==3
+	 if((mx<=1)||(mx>=X-1)||(my<=1)||(my>=Y-1)) {//if(GamField[mx][my]=='#'){  //if a gamerвЂ™s tank reaches a border of the gamefield, its coordinates will not be changed in this direction.
+			mx=mcpx;                                                          
 			my=mcpy;
 		} 
 		
@@ -214,7 +224,7 @@ int main(){
 	}while (key!='e');
 	
 	system("cls");
-	End(hits,mehits); // виведення результатів.
+	End(hits,mehits); // results rendering
 	return 0;
 }
 
@@ -394,7 +404,7 @@ void Start()
 	}while(key!='e');
 	system("cls");
 }
-void End(int hits, int mehits)  //виведення результатів гри
+void End(int hits, int mehits)  //ГўДЌГўДєГ¤ДєГ­Г­Л™ Д‘ДєГ§ГіГ«ГјЕ€Е•Е€Е‚Гў ДѓД‘ДЌ
 {
   	int i,j1,j2,j3;
 	char key;
@@ -453,16 +463,16 @@ void End(int hits, int mehits)  //виведення результатів гри
     	case 2:*yBullet=*yBullet+BS; break;
     	case 3:*xBullet=*xBullet-BS; break;
 	}
-	//якщо танк противника на одній координатній вісі зі снарядом, а по другій координатній вісі координати танка потрапляють між попереднім та новим положенням снаряда,
-	// то такий танк ми вважаємо підбитим.
-	switch(*dirBullet){ //перевіяємо, чи не влучила вона в противника
+	//Л™Д™ЕЇГ® Е€Е•Г­Д™ ДЏД‘Г®Е€ДЌГўГ­ДЌД™Е• Г­Е• Г®Г¤Г­Е‚Г© Д™Г®Г®Д‘Г¤ДЌГ­Е•Е€Г­Е‚Г© ГўЕ‚Е„Е‚ Г§Е‚ Е„Г­Е•Д‘Л™Г¤Г®Д›, Е• ДЏГ® Г¤Д‘ГіДѓЕ‚Г© Д™Г®Г®Д‘Г¤ДЌГ­Е•Е€Г­Е‚Г© ГўЕ‚Е„Е‚ Д™Г®Г®Д‘Г¤ДЌГ­Е•Е€ДЌ Е€Е•Г­Д™Е• ДЏГ®Е€Д‘Е•ДЏГ«Л™ЕЈЕ€Гј Д›Е‚Д‡ ДЏГ®ДЏДєД‘ДєГ¤Г­Е‚Д› Е€Е• Г­Г®ГўДЌД› ДЏГ®Г«Г®Д‡ДєГ­Г­Л™Д› Е„Г­Е•Д‘Л™Г¤Е•,
+	// Е€Г® Е€Е•Д™ДЌГ© Е€Е•Г­Д™ Д›ДЌ ГўГўЕ•Д‡Е•ЕџД›Г® ДЏЕ‚Г¤ГЎДЌЕ€ДЌД›.
+	switch(*dirBullet){ //ДЏДєД‘ДєГўЕ‚Л™ЕџД›Г®, Г·ДЌ Г­Дє ГўГ«ГіГ·ДЌГ«Е• ГўГ®Г­Е• Гў ДЏД‘Г®Е€ДЌГўГ­ДЌД™Е•
 		case 3: if(((*y-1==*oldyBullet)||(*y+1==*oldyBullet)||(*y==*oldyBullet))&&(*x<*oldxBullet)&&(*x>=*xBullet)) *fTank=0; /*fBullet=0;*/ break;
 	    case 2: if(((*x-1==*oldxBullet)||(*x+1==*oldxBullet)||(*x==*oldxBullet))&&(*y>*oldyBullet)&&(*y<=*yBullet)) *fTank=0; /*fBullet=0;*/ break;
 		case 1: if(((*y-1==*oldyBullet)||(*y+1==*oldyBullet)||(*y==*oldyBullet))&&(*x>*oldxBullet)&&(*x<=*xBullet)) *fTank=0; /*fBullet=0;*/ break;
 		case 0: if(((*x-1==*oldxBullet)||(*x+1==*oldxBullet)||(*x==*oldxBullet))&&(*y<*oldyBullet)&&(*y>=*yBullet)) *fTank=0; /*fBullet=0;*/ break;		
 	}
 				//
-	if((*xBullet<1)||(*xBullet>X-1)||(*yBullet<1)||(*yBullet>Y-1)) *fBullet=0; //якщо куля потрапляє за межі ігрового поля - вона зникає	
+	if((*xBullet<1)||(*xBullet>X-1)||(*yBullet<1)||(*yBullet>Y-1)) *fBullet=0; //Л™Д™ЕЇГ® Д™ГіГ«Л™ ДЏГ®Е€Д‘Е•ДЏГ«Л™Еџ Г§Е• Д›ДєД‡Е‚ Е‚ДѓД‘Г®ГўГ®ДѓГ® ДЏГ®Г«Л™ - ГўГ®Г­Е• Г§Г­ДЌД™Е•Еџ	
  }
  
  void backTurn(int *x,int *y, int *cpx,int *cpy, int *c)
@@ -479,10 +489,10 @@ void End(int hits, int mehits)  //виведення результатів гри
  
 void avoidCollision(int *x,int *y,int *mx,int *my,int *cpx,int *cpy,int *c)
 {
-	if  (((abs(*x-*mx)<=3)&&((*y==*my)||(*y==*my+1)||(*y==*my+2)||(*y==*my+3)||(*y==*my-1)||(*y==*my-2)||(*y==*my-3)))||((abs(*y-*my)<=3)&&((*x==*mx)||(*x==*mx+1)||(*x==*mx+2)||(*x==*mx+3)||(*x==*mx-1)||(*x==*mx-2)||(*x==*mx-3)))){ //  запобігаємо наїзду на танк гравця                     //(GamField[x][y]=='#'){              (((abs(x-mx)<=4)&&(y==my))||((abs(y-my)<=4)&&(x==mx)))
+	if  (((abs(*x-*mx)<=3)&&((*y==*my)||(*y==*my+1)||(*y==*my+2)||(*y==*my+3)||(*y==*my-1)||(*y==*my-2)||(*y==*my-3)))||((abs(*y-*my)<=3)&&((*x==*mx)||(*x==*mx+1)||(*x==*mx+2)||(*x==*mx+3)||(*x==*mx-1)||(*x==*mx-2)||(*x==*mx-3)))){ //  Г§Е•ДЏГ®ГЎЕ‚ДѓЕ•ЕџД›Г® Г­Е•ЕјГ§Г¤Гі Г­Е• Е€Е•Г­Д™ ДѓД‘Е•ГўГ¶Л™                     //(GamField[x][y]=='#'){              (((abs(x-mx)<=4)&&(y==my))||((abs(y-my)<=4)&&(x==mx)))
 			*x=*cpx;
 			*y=*cpy;
-			*c=abs(3-*c); //псевдовипадково змінюємо напрямок руху танка противника
+			*c=abs(3-*c); //ДЏЕ„ДєГўГ¤Г®ГўДЌДЏЕ•Г¤Д™Г®ГўГ® Г§Д›Е‚Г­ЕЈЕџД›Г® Г­Е•ДЏД‘Л™Д›Г®Д™ Д‘ГіЕ‘Гі Е€Е•Г­Д™Е• ДЏД‘Г®Е€ДЌГўГ­ДЌД™Е•
 		}
 } 
 void enemyShoot(int *c, int *mx, int *my, int *y, int *x, int *fEnemBullet, int *xEnemBullet, int *yEnemBullet, int *dirEnemBullet)
